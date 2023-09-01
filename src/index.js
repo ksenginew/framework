@@ -1,11 +1,34 @@
-const COMPONENT = Symbol()
+const TYPE = Symbol()
 
 export function render(comp, target) {
-    comp.c()
-    comp.m(target)
+    if (comp[TYPE] !== 0) throw Error()
+    if (typeof comp.name === "function") return render(comp.name(comp.props), target)
+    let el = document.createElement(comp.name)
+    for (const prop in comp.props) {
+        if (Object.hasOwnProperty.call(comp.props, prop)) {
+            const val = comp.props[prop];
+            el.setAttribute(prop, val)
+        }
+    }
+    for (const child of comp.props.children) {
+        if (child[TYPE] == 0)
+            render(child, el)
+        else {
+            let tt = document.createTextNode(child)
+            el.appendChild(tt)
+        }
+    }
+    target.appendChild(el)
 }
 
-export function h(el, props, ...children) {
+export function h(name, props, ...children) {
+    props = props || {}
+    props.children = props.children || children
+    return {
+        [TYPE]: 0,
+        name,
+        props
+    }
     if (typeof el == 'function') {
         let comp = el(props, children)
         comp.c()
@@ -16,24 +39,8 @@ export function h(el, props, ...children) {
     return {
         [COMPONENT]: true,
         c() {
-            if(props?.class === 'rrr') console.log(el)
-            comp = document.createElement(el)
-            if (props)
-                for (const prop in props) {
-                    if (Object.hasOwnProperty.call(props, prop)) {
-                        const val = props[prop];
-                        comp.setAttribute(prop, val)
-                    }
-                }
-            for (const child of children) {
-                if (child[COMPONENT]) {
-                    child.c()
-                    carr.push(child)
-                } else if (typeof child === 'string') {
-                    let tt = document.createTextNode(child)
-                    carr.push({ m(target) { target.appendChild(tt) } })
-                }
-            }
+            if (props?.class === 'rrr') console.log(el)
+
         },
         m(target) {
             carr.forEach(c => c.m(comp))
